@@ -1,4 +1,9 @@
 #! /bin/sh
+# make sure to run as root
+
+if [ ! -f CHINA ] 
+    then wget "https://raw.github.com/liruqi/west-chamber-season-3/master/CHINA"
+fi
 
 ipset -R < CHINA
 
