@@ -8,3 +8,4 @@ fi
 ipset -R < CHINA
 
 iptables -A INPUT -p tcp -m tcp --tcp-flags RST RST -m set ! --match-set CHINA src -j DROP
+iptables -A INPUT -p tcp -m tcp --tcp-flags RST,ACK RST,ACK -m set ! --match-set CHINA src -j DROP
