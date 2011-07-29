@@ -1,7 +1,8 @@
 /*
  * WestChamber Windows
- * Elysion
- * March 16 2010
+ * Elysion - elysion51@gmail.com (March 16 2010)
+ *
+ * liruqi@gmail.com (July 30 2011)
  */
 
 #include "precomp.h"
@@ -217,7 +218,7 @@ BOOLEAN IsGFWPoisoned(PUCHAR data)
 		    addr == htonl(0xf3b9bb1e) || addr == htonl(0x9f6a794b) ||
 		    addr == htonl(0x253d369e) || addr == htonl(0x9f1803ad) ||
 		    addr == htonl(0x3b1803ad))
-			return true;
+			return TRUE;
     }
     return FALSE;
 }
@@ -355,6 +356,12 @@ BOOLEAN IsTcpSynAck(PUCHAR packet)
 	return((tcp->syn) && (tcp->ack) && (!tcp->rst) && (!tcp->fin));
 }
 
+BOOLEAN IsTcpRst(PUCHAR packet)
+{
+	struct tcphdr *tcp = (struct tcphdr *)(packet + sizeof(struct ethhdr) + sizeof(struct iphdr));
+	return (tcp->rst);
+}
+
 BOOLEAN IsIPVerFour(PUCHAR packet)
 {
 	struct ethhdr *eth = (struct ethhdr *)packet;
@@ -384,9 +391,9 @@ BOOLEAN WestChamberReceiverMain(PNDIS_PACKET packet,PADAPT adapt)
 	
 	// drop any rst packet
 	if(tcp && filter_state != FILTER_STATE_NONE) {
-		rst = IsTcpRst(pack);
+		sign = IsTcpRst(pack);
 		
-		if (rst) {
+		if (sign) {
 			if ( (filter_state == FILTER_STATE_ALL) || IsReceivedPacketInList(pack) ) {
 				result = FALSE;
 			}

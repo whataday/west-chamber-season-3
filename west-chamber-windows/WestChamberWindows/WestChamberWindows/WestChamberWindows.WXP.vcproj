@@ -78,14 +78,15 @@
 		</Configuration>
 		<Configuration
 			Name="WXP2K checked|Win32"
+			OutputDirectory="$(SolutionDir)$(ConfigurationName)"
 			IntermediateDirectory=".\"
 			ConfigurationType="0"
 			InheritedPropertySheets=".\WestChamberWindows.vsprops"
 			>
 			<Tool
 				Name="VCNMakeTool"
-				BuildCommandLine="$(DDKBUILD_PATH) -WXP2K checked ."
-				ReBuildCommandLine="$(DDKBUILD_PATH) -WXP2K checked . -cZ"
+				BuildCommandLine="$(DDKBUILD_PATH) -WXP checked ."
+				ReBuildCommandLine="$(DDKBUILD_PATH) -WXP checked . -cZ"
 				CleanCommandLine=""
 				Output=""
 				PreprocessorDefinitions="DBG=1;WINVER=0x0501"

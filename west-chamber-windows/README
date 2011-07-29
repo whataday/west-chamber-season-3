@@ -1,0 +1,8 @@
+本项目代码由原始的西厢计划(http://code.google.com/p/scholarzhang/) 的 windows 移植版衍生而来。
+
+1. 放弃了连接混淆，直接在客户端上丢弃 rst 包。解决了一些国内网站无法访问的问题。
+2. 修复反 dns 污染功能。
+
+关于本项目更多信息，请参考 http://code.google.com/p/west-chamber-season-3/
+
+windows 移植版最后一次是在xp 系统下编译，各位如果在不同环境下做后续开发，请注意修改 WestChamberWindows/WestChamberWindows.WXP.vcproj 文件中相关的 ddk 参数。

@@ -1,0 +1,31 @@
+v0.05 
+这是针对西厢三项目的更新，具体请参考 http://code.google.com/p/west-chamber-season-3/
+源代码：https://github.com/liruqi/west-chamber-season-3
+由 liruqi@gmail.com 提供。
+
+v0.04
+更新GFW指纹。
+加入x64系统支持。请注意64位系统需要手动给驱动签名，详见readme。
+如果无法看到调试信息，请将DbgView中的Capture - Enable Verbose Kernel Output选项打开。
+
+v0.03
+网卡设置内的『属性页』对WestChamber Driver没有意义，已经取消。
+留了个与用户层通信的接口，现在可通过bin/wcwcontroller.exe控制驱动状态。
+IpLog.bin现在已经自动拷贝到C盘根目录。
+
+请注意:
+a. 这只是一个常规性更新，仅改善用户体验，对功能『似乎没有特别的改善』。
+b. 在Linux版本下次推出大的更新之前，如果没有导致系统崩溃或类似程度的BUG，本Windows移植版不会再做特别更新。
+
+几个问题：
+1. 链路上存在NAT的网络有较大几率不成功（NAT大多未完全实现TCP的RFC），可能的话请尝试直连。
+2. iplog.bin是二进制文件，不是文本文件。今后的版本可能会加入文本支持，但目前尚不支持。
+3. 作者没有64位系统，无法测试驱动的兼容性，故64位驱动在功能稳定前可能都不会进行开发，在此向64位系统的用户先道个歉。
+
+v0.02
+修正数据包处理过程中一个可能导致蓝屏的BUG。
+为测试目的，暂时取消IpLog筛选，ZHANG模块将对所有的TCP连接启用。
+源代码请到这里（http://code.google.com/p/scholarzhang/source/checkout）查看。
+
+v0.01
+alpha版本。初步实现gfw模块和ZHANG模块。
