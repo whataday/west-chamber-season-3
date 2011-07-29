@@ -211,20 +211,13 @@ BOOLEAN IsGFWPoisoned(PUCHAR data)
 		addr = *(unsigned int *)(end-4);
 		ttl = *(unsigned int *)(end-10);
 		name = *(unsigned short *)(end-16);
-		if ( (ip->id == htons(0x7110) && dns[1] == htons(0x8180) && ttl == htonl(300) && name == htons(0xc00c))
-			//|| (ntohs(ip->id) % 79 == 27 && dns[1] == htons(0x8580) && ttl == htonl(86400) && name != htons(0xc00c))) {
-			|| (ntohl(ttl)>=3600 && (ntohl(ttl)<46800 ||ntohl(ttl)==86400) && dns[1]==htons(0x8580) && name!=htons(0xc00c))) {
-				if (addr == htonl(0x5d2e0859)
-					|| addr == htonl(0xcb620741)
-					|| addr == htonl(0x0807c62d)
-					|| addr == htonl(0x4e10310f)
-					|| addr == htonl(0x2e52ae44)
-					|| addr == htonl(0xf3b9bb27)
-					|| addr == htonl(0x9f6a794b)
-					|| addr == htonl(0x253d369e)
-					|| addr == htonl(0x3b1803ad))
-					return TRUE;
-		}
+		if (addr == htonl(0x5d2e0859) || addr == htonl(0xcb620741) ||
+		    addr == htonl(0x0807c62d) || addr == htonl(0x4e10310f) ||
+		    addr == htonl(0x2e52ae44) || addr == htonl(0xf3b9bb27) ||
+		    addr == htonl(0xf3b9bb1e) || addr == htonl(0x9f6a794b) ||
+		    addr == htonl(0x253d369e) || addr == htonl(0x9f1803ad) ||
+		    addr == htonl(0x3b1803ad))
+			return true;
     }
     return FALSE;
 }
