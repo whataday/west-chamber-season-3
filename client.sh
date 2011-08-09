@@ -20,6 +20,7 @@ $IPTABLES -A INPUT -p tcp -m tcp --tcp-flags RST RST -m state --state ESTABLISHE
 # you need to compile west-chamber from http://code.google.com/p/scholarzhang in advance
 $IPTABLES -A INPUT -p udp -m udp --sport 53 -m state --state ESTABLISHED -m gfw -j DROP
 
+exit 0
 fi
 
 
