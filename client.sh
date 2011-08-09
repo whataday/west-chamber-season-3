@@ -8,11 +8,13 @@ if [ -x "$IPTABLES" ]; then
 match_set=""
 
 if [ -x "$IPSET" ]; then
+    if $IPSET --version; then 
     if [ ! -f CHINA ]; then 
         wget "https://raw.github.com/liruqi/west-chamber-season-3/master/CHINA"
     fi
     match_set="-m set ! --match-set CHINA src"
     $IPSET -R < CHINA
+    fi
 fi
 
 $IPTABLES -A INPUT -p tcp -m tcp --tcp-flags RST RST -m state --state ESTABLISHED $match_set -j DROP
