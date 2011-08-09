@@ -16,6 +16,7 @@ if [ -x "$IPSET" ]; then
 fi
 
 $IPTABLES -A INPUT -p tcp -m tcp --tcp-flags RST RST -m state --state ESTABLISHED $match_set -j DROP
+fi
 
 
 IPFW=`which ipfw`
