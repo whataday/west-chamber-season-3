@@ -1,0 +1,6 @@
+config NETFILTER_XT_TARGET_DELUDE
+	tristate '"ZHANG" target support'
+	depends on NETFILTER_XTABLES && NETFILTER_ADVANCED
+	---help---
+	The ZHANG target sends obfuscating packets upon incoming SYN/ACK to 
+	make the connection invisible to third-party intrusion detection.

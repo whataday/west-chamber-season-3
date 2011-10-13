@@ -1,0 +1,150 @@
+% West-chamber README
+% Klzgrad <kizdiv@gmail.com>
+
+Synopsis
+========
+
+West-chamber is a research project for the detection and circumvention against
+hostile intrusion detection and disruption, especially the Great Firewall of
+China.
+
+West-chamber provides kernel modules that modify the behaviors of the user's
+TCP/IP stack so that hostile intrusion detection can be bypassed without
+specialized userspace tools and daemons. West-chamber also provides kernel
+modules that matches patterns of specific packets sent by hostile IDS/IPS for
+ease of research, or does low-level protocol obfuscation.
+
+West-chamber is built upon the development framework of xtables-addons[^1] by
+Jan Engelhardt. The version of xtables-addons built upon is 1.37.
+
+[^1]: http://xtables-addons.sf.net
+
+The name of west-chamber comes from the ancient Chinese story "Romance of the
+West Chamber" about lovers barricaded by walls.
+
+Features
+========
+
+ * TCP connection obfuscation: the ZHANG and CUI target extensions inject
+   carefully crafted packets in a TCP connection so that NIDS fails to do
+   further detection on upper layer.
+ * IDS packets fingerprint matching: the gfw match extension detects packets
+   sent by NIDS to interrupt connection or poison DNS query with pre-recorded
+   fingerprints.
+ * UDP encapsulation & decapsulation: the UDPENCAP target extension does
+   unconditional UDP encapsulation and decapsulation above the internet layer.
+   With this feature, users can set up static tunnels that work with packets
+   that looks like UDP packets for NIDS.
+
+Previous work
+=============
+
+T. Ptacek, et al. proposed methodology of elusion of network intrusion
+detection in their 1998 paper.[^2] By inserting special packets in a TCP
+connection that are ignored by the other endpoint of the connection, the NIDS
+doing detection in the middle will wrongly analyze protocol and tear down
+connection prematurely. We adopted this idea and built the ZHANG/CUI TCP
+connection obfuscation modules based on a weakness of the Great Firewall that
+can be exploited in the most RFC conformant way.
+
+[^2]: T. Ptacek, T.N. Newsham. Insertion, Evasion, and Denial of Service:
+      Eluding Network Intrusion Detection. 1998.
+
+Implementation design
+=====================
+
+We surveyed[^3] several possible designs of implementation:
+
+ * Userspace daemon based on libpcap. This is actually the proof of concept
+   implementation at the first. However, libpcap uses PF_PACKET sockets which
+   argubly introduces performance impact by copying data from kernel to user
+   and works on link layer which is probably too low. ntop improves packet
+   capture performance with PF_RING zero-copy socket, which is not widely
+   avaiable.
+ * Userspace daemon based on netfilter queue and log. libnetfilter_queue and
+   libnetfilter_log bring packets from IP stack of the OS to userspace. This
+   is the appropriate layer but we still don't like the copying data forth and
+   back with file descriptor.
+ * Kprobes. Kprobes dynamically implants breakpoints in kernel to executes
+   ad-hoc code. This can be used to directly modify the behavior of the TCP
+   stack, but it's very intrusive, error-prone and probably unstable. It's
+   also not configurable from userspace.
+ * Netfilter modules. Netfilter has several hooks across system IP stack that
+   can be used for modifying TCP behavior at IP layer, which is close enough.
+   The iptables tool also provides high configurability for netfilter in the
+   userspace. Thanks to the excellent work by Jan Engelhardt, it's even easier
+   to build these modules based on the highly friendly netfilter module
+   development framework -- xtables-addons.
+
+[^3]: [Tools for research and diagnosis of the GFW](http://gfwrev.blogspot.com/2009/11/gfw_10.html) (Chinese).
+
+There are also some considerations with the UDPENCAP target. It's possible to
+encapsulate packets in UDP for IPsec ESP and L2TPv3 (UDP_ENCAP_ESPINUDP,
+UDP_ENCAP_L2TPINUDP). However, the kernel's implementation is limited. The
+IPsec ESP in UDP requires a syscall on specific socket and is not available
+for IPv6, and the L2TPv3 creates sockets and binds them to ports in kernel
+space itself, so that user can't bind the used ports in user space, which is
+undesired for the purpose of obfuscation.
+
+Limitations
+===========
+
+The TCP connection obfuscation works on TCP protocol, so it does not have
+any effect on IP blocking. The ZHANG/CUI module assume that the GFW does
+stateful TCP detection and connection endpoints are RFC conformant, which is
+somehow not always the case. To prevent misbehavior when the assumptions are
+not met, ipset can be used to limit the working range of these modules.
+
+These modules are built on volatile characteristics and fingerprints of the
+GFW so they are also inherently volatile and subject to changes. When it
+changes, more experiments have to be done.
+
+Netfilter modules are linux-specific and run in kernel. This could bring in
+some difficulty in development and porting.
+
+Distributions
+=============
+
+ * Debian (wheezy/sid): west-chamber-source
+ * Gentoo Portage Overlay: net-firewall/west-chamber
+ * RPM Fusion: west-chamber, west-chamber-kmod
+
+Known bugs
+==========
+
+ * The algorthims in ZHANG/CUI modules and fingerprints in gfw module need
+   constant update or they will likely do not work.
+ * The Windows port version is less stable and needs more testing.
+
+See also
+========
+
+ * [Report bugs](http://code.google.com/p/scholarzhang/issues).
+ * [Our project on Google Code](http://code.google.com/p/scholarzhang).
+ * [Mailing list](http://groups.google.com/group/scholarzhang-dev).
+ * [Our previous research articles (Chinese)](http://gfwrev.blogspot.com/).
+ * [liujinyuan](https://github.com/tewilove/liujinyuan):
+       a fork and port of west-chamber on Android, by tewilove.
+ * [west-chamber-season-2](http://code.google.com/p/west-chamber-season-2/):
+ * [west-chamber-season-3](http://code.google.com/p/west-chamber-season-3/):
+       further work on west-chamber, by liruqi, et al.
+
+Copyright
+=========
+This project contains code from xtables-addons by Jan Engelhardt, et al.
+
+Copyright (C) 2009, 2010, 2011 Klzgrad, yingyingcui, Elysion, et al.
+
+This program is free software; you can redistribute it and/or modify it under
+the terms of the GNU General Public License as published by the Free Software
+Foundation; either version 2 of the License, or (at your option) any later
+version.
+
+This program is distributed in the hope that it will be useful, but WITHOUT
+ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+FOR A PARTICULAR PURPOSE.  See the GNU General Public License for more
+details.
+
+You should have received a copy of the GNU General Public License along with
+this program; if not, write to the Free Software Foundation, Inc., 51 Franklin
+Street, Fifth Floor, Boston, MA  02110-1301, USA.

@@ -1,0 +1,6 @@
+config NETFILTER_XT_TARGET_UDPENCAP
+	tristate '"UDPENCAP" target support'
+	depends on NETFILTER_XTABLES && NETFILTER_ADVANCED
+	---help---
+	The UDPENCAP target encapsulates the transport layer of a packet into
+        a UDP datagram statelessly.

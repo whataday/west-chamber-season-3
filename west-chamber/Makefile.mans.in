@@ -1,0 +1,40 @@
+# -*- Makefile -*-
+# MANUAL
+
+srcdir := @srcdir@
+
+wcman_matches := $(shell find "${srcdir}" -name 'libxt_[a-z]*.man' | sort)
+wcman_targets := $(shell find "${srcdir}" -name 'libxt_[A-Z]*.man' | sort)
+wlist_matches := $(patsubst ${srcdir}/libxt_%.man,%,${wcman_matches})
+wlist_targets := $(patsubst ${srcdir}/libxt_%.man,%,${wcman_targets})
+
+.PHONY: FORCE
+
+FORCE:
+
+.manpages.lst: FORCE
+	@echo "${wlist_targets} ${wlist_matches}" >$@.tmp; \
+	cmp -s $@ $@.tmp || mv $@.tmp $@; \
+	rm -f $@.tmp;
+
+man_run = \
+	${AM_V_GEN}for ext in $(1); do \
+		name="$${ext%.man}"; \
+		name="$${name\#\#*/libxt_}"; \
+		if [ -f "$$ext" ]; then \
+			echo ".SS $$name"; \
+			cat "$$ext" || exit $$?; \
+			continue; \
+		fi; \
+	done >$@;
+
+all: west-chamber.8
+
+west-chamber.8: ${srcdir}/west-chamber.8.in matches.man targets.man
+	${AM_V_GEN}sed -e '/@MATCHES@/ r matches.man' -e '/@TARGET@/ r targets.man' $< >$@;
+
+matches.man: .manpages.lst ${wcman_matches}
+	$(call man_run,${wlist_matches})
+
+targets.man: .manpages.lst ${wcman_targets}
+	$(call man_run,${wlist_targets})

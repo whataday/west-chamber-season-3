@@ -1,0 +1,9 @@
+.TH west-chamber 8 "0.0.2 (2011-09-12)" "" "0.0.2 (2011-09-12)"
+.SH Name
+West-chamber \(em xtables extensions for eluding network intrusion detection.
+.SH Targets
+.\" @TARGET@
+.SH Matches
+.\" @MATCHES@
+.SH "See also"
+\fBxtables-addons\fP(8), \fBiptables\fP(8), \fBip6tables\fP(8)

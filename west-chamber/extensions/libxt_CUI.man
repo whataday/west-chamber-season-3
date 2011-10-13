@@ -1,0 +1,2 @@
+The CUI target sends obfuscating packets upon incoming SYN to make the 
+connection invisible to third-party intrusion detection.

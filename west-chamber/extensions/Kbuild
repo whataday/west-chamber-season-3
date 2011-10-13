@@ -1,0 +1,14 @@
+# -*- Makefile -*-
+
+include ${XA_ABSTOPSRCDIR}/mconfig
+-include ${XA_ABSTOPSRCDIR}/mconfig.*
+
+obj-m                    += compat_xtables.o
+
+obj-${build_CUI}         += xt_CUI.o
+obj-${build_ZHANG}       += xt_ZHANG.o
+obj-${build_UDPENCAP}    += xt_UDPENCAP.o
+obj-${build_gfw}         += xt_gfw.o
+
+-include ${M}/*.Kbuild
+-include ${M}/Kbuild.*

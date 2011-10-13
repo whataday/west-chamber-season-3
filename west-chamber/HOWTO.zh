@@ -1,0 +1,145 @@
+% West-chamber HOWTO
+% Klzgrad <kizdiv@gmail.com>
+
+起步
+====
+
+在安装完成之后，可以尝试：
+
+    # iptables -A INPUT -p tcp --sport 80 --tcp-flags FIN,SYN,RST,ACK SYN,ACK\
+                        -m state --state ESTABLISHED -j ZHANG
+    # iptables -A INPUT -p tcp --sport 80 -m state --state ESTABLISHED -m gfw\
+                        -j LOG --log-level info --log-prefix "gfw: "
+    # iptables -A INPUT -p udp --sport 53 -m state --state ESTABLISHED -m gfw\
+                        -j DROP
+    # mv /etc/resolv.conf /etc/resolv.conf.old
+    # echo nameserver 8.8.8.8 > /etc/resolv.conf
+
+然后可以开始测试，比如Youtube。下面详细解释含义。
+
+ZHANG: 客户端TCP连接混淆
+========================
+
+    # iptables -A INPUT \
+		-p tcp --sport 80 --tcp-flags FIN,SYN,RST,ACK SYN,ACK \
+		-m state --state ESTABLISHED \
+		-m set --match-set NOCLIP src \
+		-j ZHANG \
+		-m comment --comment "client-side connection obfuscation"
+
+这条规则意味着当在TCP/80端口收到一个SYN/ACK包，并且这个包对应了一个活动的TCP连
+接，并且源地址在NOCLIP定义的地址段中，就执行ZHANG动作，发出特制的包混淆连接，
+导致GFW认为连接已经结束，但是实际上连接继续，从而避免关键词检测。
+
+但是对于一些不遵守RFC的目标主机或者防火墙，这可能导致正常不含关键词的连接被对
+方终止或者忽略。这也就是使用ipset限制ZHANG的作用范围的动机。在极少的情况下会出
+现其他特殊的现象，因此我们需要采取下面的措施。
+
+记录GFW产生的伪包
+=================
+
+    # iptables -A INPUT \
+		-p tcp --sport 80 \
+		-m state --state ESTABLISHED \
+		-m gfw \
+		-j LOG --log-level info --log-prefix "gfw: " \
+		-m comment --comment "log gfw tcp resets"
+
+`-m gfw`的作用就是根据包的字段监测GFW的报文指纹。当浏览器中看见连接重置的时候，
+去检查syslog就可以知道是否是GFW所为。
+
+DNS免污染、劫持
+===============
+
+    # iptables -A INPUT \
+		-p udp --sport 53 \
+		-m state --state ESTABLISHED \
+		-m gfw \
+		-j DROP \
+		-m comment --comment "drop gfw dns hijacks"
+
+`-m gfw`同样可以匹配GFW发出的DNS劫持包，并针对性地采取丢弃的措施。将nameserver
+设置（resolv.conf或者dhclient.conf中的prepend domain-name-servers以永久保存此
+优先设置）为一个未受污染的服务器，比如8.8.8.8，然后开启此条规则，便可获得正确
+的解析结果。
+
+CUI: 服务端TCP连接混淆
+======================
+
+    # iptables -A INPUT \
+		-p tcp --dport 80 --tcp-flags FIN,SYN,RST,ACK SYN \
+		-m state --state NEW \
+		-j CUI \
+		-m comment --comment "server-side connection obfuscation"
+
+原理与ZHANG类似，只是方向相反。
+
+使用ipset限制工作范围
+=====================
+
+*注意*：ipset的版本应该大于4.2，否则hash表扩大的时候某种参数设置可能会导致
+kernel oops。在0.0.1以后的版本中已经移除了自带的ipset，请使用发行版提供的
+ipset。
+
+ipset可以高效地定义一组ip地址，使得一条iptables规则就可以匹配处理这些地址。在
+`examples`目录中提供了Google的地址段的ipset定义，你也可以自己定义其他的地址段。
+
+例如：定义Google的地址段：
+
+    # ipset -R
+    -N YOUTUBE nethash --hashsize 50 --probes 1
+    -A YOUTUBE 64.15.112.0/20
+    -A YOUTUBE 82.129.37.0/24
+    -A YOUTUBE 208.65.152.0/22
+    -A YOUTUBE 208.117.224.0/19
+    -A YOUTUBE 213.146.171.0/24
+    COMMIT
+    ^D
+
+如果`--hashsize`不够大，ipset会自动调整尺寸并记录到syslog。如果尺寸扩大次数太
+多则考虑增大probes值。`--probes`值越低匹配性能越好，但是会导致hash表尺寸较大；
+反之如果probes值较大，hash表尺寸会比较小，但是匹配性能低一些。你可以根据情况调
+整到满意的数值。
+
+你也可使用`examples/ipsets`目录中提供的文件进行设置：
+
+    # cd examples
+    # ipset -R < YOUTUBE
+    # ipset -R < GOOGLE
+    # ipset -R < NOCLIP
+
+在定义完几个网段之后你可以把这些网段一起组成一个列表：
+
+    # ipset -R
+    -N NOCLIP setlist --size 4
+    -A NOCLIP GOOGLE
+    -A NOCLIP YOUTUBE
+    COMMIT
+    ^D
+
+然后在iptables规则中直接使用set匹配即可：
+
+    -m set --match-set NOCLIP src
+
+特性
+====
+对于无法采取IP地址封锁的目标，这种方法特别有效。一个最直接的例子就是Youtube以
+及其他所有Google产品，可以通过这种方式在ipv4线路上不经过代理直连。初期测试中，
+Youtube使用非常流畅。
+
+需要注意的是，ZHANG和CUI是“最终目标”，它们会直接ACCEPT送给它们的包，因此对于这
+些包，之后的规则都不会起作用。所以某些情况下你应该将以ZHANG或CUI为目标的规则放
+在最后、其他过滤规则的后面。
+
+诊断故障
+========
+当浏览器仍然显示连接重置的时候，检查syslog看是否是GFW所为。
+
+也可以用tcpdump保存流量，当问题发生时可以用wireshark回溯查找原因。
+
+    tcpdump -Kpq -C2 -W10 -ieth0 -s0 -wcap port 80
+
+当浏览器工作不正常时，输入`fg`然后`^C`结束程序，打开最新的一个dump。稍微解释一
+下参数含义：`-K`不检查TCP检验和，`-p`不使用混杂模式，`-q`安静，`-C2`每2000000
+字节换一个文件保存，`-W10`最多十个文件循环使用，`-ieth0`使用eth0，`-s0`捕获整
+个包，`-wcap`文件名为“capXX”。也可以自行调整。

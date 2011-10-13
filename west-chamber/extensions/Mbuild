@@ -1,0 +1,6 @@
+# -*- Makefile -*-
+
+obj-${build_CUI}         += libxt_CUI.so
+obj-${build_ZHANG}       += libxt_ZHANG.so
+obj-${build_UDPENCAP}    += libxt_UDPENCAP.so
+obj-${build_gfw}         += libxt_gfw.so

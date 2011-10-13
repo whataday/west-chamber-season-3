@@ -1,0 +1,11 @@
+Unconditionally and statelessly encapsulate transport layer packets in UDP
+packets and decapsulate UDP packets.
+.TP
+\fB\-\-decap\fP \fIprotocol\fP
+Decapsulate to this protocol (number).
+.TP
+\fB\-\-sport\fP \fIport\fP
+Encapsulate with the source port (number).
+.TP
+\fB\-\-dport\fP \fIport\fP
+Encapsulate with the destination port (number).

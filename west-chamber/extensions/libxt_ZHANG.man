@@ -1,0 +1,2 @@
+The ZHANG target sends obfuscating packets upon incoming SYN/ACK to make the 
+connection invisible to third-party intrusion detection.

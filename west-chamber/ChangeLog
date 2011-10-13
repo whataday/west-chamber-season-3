@@ -1,0 +1,16 @@
+HEAD
+====
+- Added UDPENCAP target module. (2011-09-16)
+- Rewrited documentations. (2011-09-12)
+- Removed ipset. Please use ipset provided by your distribution. (2011-09-10)
+- xtables-addons: updated to 1.37 (2011-09-10)
+- xtables-addons: updated to 1.36 (2011-07-11)
+- xtables-addons: updated to 1.30 (2010-10-18)
+- gfw: rules loosen (2010-10-17)
+
+0.0.1 (Mar 10, 2010)
+====================
+- Intial release
+- Repackaging from xtables-addons git version Wed, 3 Feb 2010 18:35:33 +0000;
+- New match module: gfw
+- New docs

@@ -1,0 +1,4 @@
+-N WIKIMEDIA nethash --hashsize 50 --probes 1 --resize 50                       
+-A WIKIMEDIA 208.80.152.0/22                                                    
+-A WIKIMEDIA 91.198.174.0/24                                                    
+COMMIT

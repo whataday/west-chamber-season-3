@@ -1,0 +1,165 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+  <meta name="generator" content="pandoc" />
+  <meta name="author" content="Klzgrad 
+                               '+''+e+''+'');
+                               // -->
+                               &#x6b;&#x69;&#122;&#100;&#x69;&#118;&#32;&#x61;&#116;&#32;&#x67;&#x6d;&#x61;&#x69;&#108;&#32;&#100;&#x6f;&#116;&#32;&#x63;&#x6f;&#x6d;" />
+  <title>West-chamber README</title>
+  <style type="text/css">
+  body {
+      margin: auto;
+      padding-right: 1em;
+      padding-left: 1em;
+      max-width: 44em; 
+      border-left: 1px solid black;
+      border-right: 1px solid black;
+      color: black;
+      font-family: Verdana, sans-serif;
+      font-size: 100%;
+      line-height: 140%;
+      color: #333; 
+  }
+  pre {
+      border: 1px dotted gray;
+      background-color: #ececec;
+      color: #1111111;
+      padding: 0.5em;
+  }
+  code {
+      font-family: monospace;
+  }
+  h1 a, h2 a, h3 a, h4 a, h5 a { 
+      text-decoration: none;
+      color: #7a5ada; 
+  }
+  h1, h2, h3, h4, h5 { font-family: verdana;
+                       font-weight: bold;
+                       border-bottom: 1px dotted black;
+                       color: #7a5ada; }
+  h1 {
+          font-size: 130%;
+  }
+  
+  h2 {
+          font-size: 110%;
+  }
+  
+  h3 {
+          font-size: 95%;
+  }
+  
+  h4 {
+          font-size: 90%;
+          font-style: italic;
+  }
+  
+  h5 {
+          font-size: 90%;
+          font-style: italic;
+  }
+  
+  h1.title {
+          font-size: 200%;
+          font-weight: bold;
+          padding-top: 0.2em;
+          padding-bottom: 0.2em;
+          text-align: left;
+          border: none;
+  }
+  
+  dt code {
+          font-weight: bold;
+  }
+  dd p {
+          margin-top: 0;
+  }
+  
+  #footer {
+          padding-top: 1em;
+          font-size: 70%;
+          color: gray;
+          text-align: center;
+  }
+  </style>
+</head>
+<body>
+<h1 class="title">West-chamber README</h1>
+<div id="TOC">
+<ul>
+<li><a href="#synopsis"><span class="toc-section-number">1</span> Synopsis</a></li>
+<li><a href="#features"><span class="toc-section-number">2</span> Features</a></li>
+<li><a href="#previous-work"><span class="toc-section-number">3</span> Previous work</a></li>
+<li><a href="#implementation-design"><span class="toc-section-number">4</span> Implementation design</a></li>
+<li><a href="#limitations"><span class="toc-section-number">5</span> Limitations</a></li>
+<li><a href="#distributions"><span class="toc-section-number">6</span> Distributions</a></li>
+<li><a href="#known-bugs"><span class="toc-section-number">7</span> Known bugs</a></li>
+<li><a href="#see-also"><span class="toc-section-number">8</span> See also</a></li>
+<li><a href="#copyright"><span class="toc-section-number">9</span> Copyright</a></li>
+</ul>
+</div>
+<h1 id="synopsis"><a href="#TOC"><span class="header-section-number">1</span> Synopsis</a></h1>
+<p>West-chamber is a research project for the detection and circumvention against hostile intrusion detection and disruption, especially the Great Firewall of China.</p>
+<p>West-chamber provides kernel modules that modify the behaviors of the user’s TCP/IP stack so that hostile intrusion detection can be bypassed without specialized userspace tools and daemons. West-chamber also provides kernel modules that matches patterns of specific packets sent by hostile IDS/IPS for ease of research, or does low-level protocol obfuscation.</p>
+<p>West-chamber is built upon the development framework of xtables-addons<sup><a href="#fn1" class="footnoteRef" id="fnref1">1</a></sup> by Jan Engelhardt. The version of xtables-addons built upon is 1.37.</p>
+<p>The name of west-chamber comes from the ancient Chinese story “Romance of the West Chamber” about lovers barricaded by walls.</p>
+<h1 id="features"><a href="#TOC"><span class="header-section-number">2</span> Features</a></h1>
+<ul>
+<li>TCP connection obfuscation: the ZHANG and CUI target extensions inject carefully crafted packets in a TCP connection so that NIDS fails to do further detection on upper layer.</li>
+<li>IDS packets fingerprint matching: the gfw match extension detects packets sent by NIDS to interrupt connection or poison DNS query with pre-recorded fingerprints.</li>
+<li>UDP encapsulation &amp; decapsulation: the UDPENCAP target extension does unconditional UDP encapsulation and decapsulation above the internet layer. With this feature, users can set up static tunnels that work with packets that looks like UDP packets for NIDS.</li>
+</ul>
+<h1 id="previous-work"><a href="#TOC"><span class="header-section-number">3</span> Previous work</a></h1>
+<p>T. Ptacek, et al. proposed methodology of elusion of network intrusion detection in their 1998 paper.<sup><a href="#fn2" class="footnoteRef" id="fnref2">2</a></sup> By inserting special packets in a TCP connection that are ignored by the other endpoint of the connection, the NIDS doing detection in the middle will wrongly analyze protocol and tear down connection prematurely. We adopted this idea and built the ZHANG/CUI TCP connection obfuscation modules based on a weakness of the Great Firewall that can be exploited in the most RFC conformant way.</p>
+<h1 id="implementation-design"><a href="#TOC"><span class="header-section-number">4</span> Implementation design</a></h1>
+<p>We surveyed<sup><a href="#fn3" class="footnoteRef" id="fnref3">3</a></sup> several possible designs of implementation:</p>
+<ul>
+<li>Userspace daemon based on libpcap. This is actually the proof of concept implementation at the first. However, libpcap uses PF_PACKET sockets which argubly introduces performance impact by copying data from kernel to user and works on link layer which is probably too low. ntop improves packet capture performance with PF_RING zero-copy socket, which is not widely avaiable.</li>
+<li>Userspace daemon based on netfilter queue and log. libnetfilter_queue and libnetfilter_log bring packets from IP stack of the OS to userspace. This is the appropriate layer but we still don’t like the copying data forth and back with file descriptor.</li>
+<li>Kprobes. Kprobes dynamically implants breakpoints in kernel to executes ad-hoc code. This can be used to directly modify the behavior of the TCP stack, but it’s very intrusive, error-prone and probably unstable. It’s also not configurable from userspace.</li>
+<li>Netfilter modules. Netfilter has several hooks across system IP stack that can be used for modifying TCP behavior at IP layer, which is close enough. The iptables tool also provides high configurability for netfilter in the userspace. Thanks to the excellent work by Jan Engelhardt, it’s even easier to build these modules based on the highly friendly netfilter module development framework — xtables-addons.</li>
+</ul>
+<p>There are also some considerations with the UDPENCAP target. It’s possible to encapsulate packets in UDP for IPsec ESP and L2TPv3 (UDP_ENCAP_ESPINUDP, UDP_ENCAP_L2TPINUDP). However, the kernel’s implementation is limited. The IPsec ESP in UDP requires a syscall on specific socket and is not available for IPv6, and the L2TPv3 creates sockets and binds them to ports in kernel space itself, so that user can’t bind the used ports in user space, which is undesired for the purpose of obfuscation.</p>
+<h1 id="limitations"><a href="#TOC"><span class="header-section-number">5</span> Limitations</a></h1>
+<p>The TCP connection obfuscation works on TCP protocol, so it does not have any effect on IP blocking. The ZHANG/CUI module assume that the GFW does stateful TCP detection and connection endpoints are RFC conformant, which is somehow not always the case. To prevent misbehavior when the assumptions are not met, ipset can be used to limit the working range of these modules.</p>
+<p>These modules are built on volatile characteristics and fingerprints of the GFW so they are also inherently volatile and subject to changes. When it changes, more experiments have to be done.</p>
+<p>Netfilter modules are linux-specific and run in kernel. This could bring in some difficulty in development and porting.</p>
+<h1 id="distributions"><a href="#TOC"><span class="header-section-number">6</span> Distributions</a></h1>
+<ul>
+<li>Debian (wheezy/sid): west-chamber-source</li>
+<li>Gentoo Portage Overlay: net-firewall/west-chamber</li>
+<li>RPM Fusion: west-chamber, west-chamber-kmod</li>
+</ul>
+<h1 id="known-bugs"><a href="#TOC"><span class="header-section-number">7</span> Known bugs</a></h1>
+<ul>
+<li>The algorthims in ZHANG/CUI modules and fingerprints in gfw module need constant update or they will likely do not work.</li>
+<li>The Windows port version is less stable and needs more testing.</li>
+</ul>
+<h1 id="see-also"><a href="#TOC"><span class="header-section-number">8</span> See also</a></h1>
+<ul>
+<li><a href="http://code.google.com/p/scholarzhang/issues">Report bugs</a>.</li>
+<li><a href="http://code.google.com/p/scholarzhang">Our project on Google Code</a>.</li>
+<li><a href="http://groups.google.com/group/scholarzhang-dev">Mailing list</a>.</li>
+<li><a href="http://gfwrev.blogspot.com/">Our previous research articles (Chinese)</a>.</li>
+<li><a href="https://github.com/tewilove/liujinyuan">liujinyuan</a>: a fork and port of west-chamber on Android, by tewilove.</li>
+<li><a href="http://code.google.com/p/west-chamber-season-2/">west-chamber-season–2</a>:</li>
+<li><a href="http://code.google.com/p/west-chamber-season-3/">west-chamber-season–3</a>: further work on west-chamber, by liruqi, et al.</li>
+</ul>
+<h1 id="copyright"><a href="#TOC"><span class="header-section-number">9</span> Copyright</a></h1>
+<p>This project contains code from xtables-addons by Jan Engelhardt, et al.</p>
+<p>Copyright (C) 2009, 2010, 2011 Klzgrad, yingyingcui, Elysion, et al.</p>
+<p>This program is free software; you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any later version.</p>
+<p>This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.</p>
+<p>You should have received a copy of the GNU General Public License along with this program; if not, write to the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110–1301, USA.</p>
+<div class="footnotes">
+<hr />
+<ol>
+<li id="fn1"><p>http://xtables-addons.sf.net <a href="#fnref1" class="footnoteBackLink" title="Jump back to footnote 1">↩</a></p></li>
+<li id="fn2"><p>T. Ptacek, T.N. Newsham. Insertion, Evasion, and Denial of Service: Eluding Network Intrusion Detection. 1998. <a href="#fnref2" class="footnoteBackLink" title="Jump back to footnote 2">↩</a></p></li>
+<li id="fn3"><p><a href="http://gfwrev.blogspot.com/2009/11/gfw_10.html">Tools for research and diagnosis of the GFW</a> (Chinese). <a href="#fnref3" class="footnoteBackLink" title="Jump back to footnote 3">↩</a></p></li>
+</ol>
+</div>
+</body>
+</html>

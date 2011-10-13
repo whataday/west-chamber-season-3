@@ -1,0 +1,195 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+  <meta name="generator" content="pandoc" />
+  <meta name="author" content="Klzgrad 
+                               '+''+e+''+'');
+                               // -->
+                               &#x6b;&#x69;&#122;&#100;&#x69;&#118;&#32;&#x61;&#116;&#32;&#x67;&#x6d;&#x61;&#x69;&#108;&#32;&#100;&#x6f;&#116;&#32;&#x63;&#x6f;&#x6d;" />
+  <title>West-chamber HOWTO</title>
+  <style type="text/css">
+  body {
+      margin: auto;
+      padding-right: 1em;
+      padding-left: 1em;
+      max-width: 44em; 
+      border-left: 1px solid black;
+      border-right: 1px solid black;
+      color: black;
+      font-family: Verdana, sans-serif;
+      font-size: 100%;
+      line-height: 140%;
+      color: #333; 
+  }
+  pre {
+      border: 1px dotted gray;
+      background-color: #ececec;
+      color: #1111111;
+      padding: 0.5em;
+  }
+  code {
+      font-family: monospace;
+  }
+  h1 a, h2 a, h3 a, h4 a, h5 a { 
+      text-decoration: none;
+      color: #7a5ada; 
+  }
+  h1, h2, h3, h4, h5 { font-family: verdana;
+                       font-weight: bold;
+                       border-bottom: 1px dotted black;
+                       color: #7a5ada; }
+  h1 {
+          font-size: 130%;
+  }
+  
+  h2 {
+          font-size: 110%;
+  }
+  
+  h3 {
+          font-size: 95%;
+  }
+  
+  h4 {
+          font-size: 90%;
+          font-style: italic;
+  }
+  
+  h5 {
+          font-size: 90%;
+          font-style: italic;
+  }
+  
+  h1.title {
+          font-size: 200%;
+          font-weight: bold;
+          padding-top: 0.2em;
+          padding-bottom: 0.2em;
+          text-align: left;
+          border: none;
+  }
+  
+  dt code {
+          font-weight: bold;
+  }
+  dd p {
+          margin-top: 0;
+  }
+  
+  #footer {
+          padding-top: 1em;
+          font-size: 70%;
+          color: gray;
+          text-align: center;
+  }
+  </style>
+</head>
+<body>
+<h1 class="title">West-chamber HOWTO</h1>
+<div id="TOC">
+<ul>
+<li><a href="#getting-started"><span class="toc-section-number">1</span> Getting started</a></li>
+<li><a href="#zhang---client-side-connection-obfuscation"><span class="toc-section-number">2</span> ZHANG - client-side connection obfuscation</a></li>
+<li><a href="#logging-gfw-tcp-resets-in-syslog"><span class="toc-section-number">3</span> Logging GFW tcp resets in syslog</a></li>
+<li><a href="#dropping-gfw-dns-hijacking-packets"><span class="toc-section-number">4</span> Dropping GFW dns hijacking packets</a></li>
+<li><a href="#cui---server-side-connection-obfuscation"><span class="toc-section-number">5</span> CUI - server-side connection obfuscation</a></li>
+<li><a href="#using-ipset"><span class="toc-section-number">6</span> Using ipset</a></li>
+<li><a href="#setting-up-static-tunnels-with-obfuscation"><span class="toc-section-number">7</span> Setting up static tunnels with obfuscation</a></li>
+<li><a href="#troubleshooting"><span class="toc-section-number">8</span> Troubleshooting</a></li>
+</ul>
+</div>
+<h1 id="getting-started"><a href="#TOC"><span class="header-section-number">1</span> Getting started</a></h1>
+<pre><code># iptables -A INPUT -p tcp --sport 80 --tcp-flags FIN,SYN,RST,ACK SYN,ACK\
+                    -m state --state ESTABLISHED -j ZHANG
+# iptables -A INPUT -p tcp --sport 80 -m state --state ESTABLISHED -m gfw\
+                    -j LOG --log-level info --log-prefix &quot;gfw: &quot;
+# iptables -A INPUT -p udp --sport 53 -m state --state ESTABLISHED -m gfw\
+                    -j DROP
+# mv /etc/resolv.conf /etc/resolv.conf.old
+# echo nameserver 8.8.8.8 &gt; /etc/resolv.conf
+</code></pre>
+<h1 id="zhang---client-side-connection-obfuscation"><a href="#TOC"><span class="header-section-number">2</span> ZHANG - client-side connection obfuscation</a></h1>
+<pre><code># iptables \
+    -A INPUT \
+    -p tcp --sport 80 --tcp-flags FIN,SYN,RST,ACK SYN,ACK \
+    -m state --state ESTABLISHED \
+    -j ZHANG \
+    -m comment --comment &quot;client-side connection obfuscation&quot;
+</code></pre>
+<p>This means incoming SYN/ACK from the ip address in the NOCLIP set and from port 80 will be replied with special packets to make connection obfuscated against the GFW.</p>
+<p>That will make your free from keyword reset filtering when visiting a normal server. But certain rfc non-compliant hosts and firewalls will reset the connection if received such replies sent by ZHANG. This is why we need ipset to limit the ip range that will be dealt with by ZHANG to the minimum of what we really need.</p>
+<h1 id="logging-gfw-tcp-resets-in-syslog"><a href="#TOC"><span class="header-section-number">3</span> Logging GFW tcp resets in syslog</a></h1>
+<pre><code># iptables \
+    -A INPUT \
+    -p tcp --sport 80 \
+    -m state --state ESTABLISHED \
+    -m gfw \
+    -j LOG --log-level info --log-prefix &quot;gfw: &quot; \
+    -m comment --comment &quot;log gfw tcp resets&quot;
+</code></pre>
+<p>When you see “connection reset” notice in browser, you may see what happened on the transport layer in the tail of syslog.</p>
+<h1 id="dropping-gfw-dns-hijacking-packets"><a href="#TOC"><span class="header-section-number">4</span> Dropping GFW dns hijacking packets</a></h1>
+<pre><code># iptables \
+    -A INPUT \
+    -p udp --sport 53 \
+    -m state --state ESTABLISHED \
+    -m gfw \
+    -j DROP \
+    -m comment --comment &quot;drop gfw dns hijacks&quot;
+</code></pre>
+<p>You can update your resolv.conf by:</p>
+<ol style="list-style-type: decimal">
+<li>modify dhclient.conf, find the `prepend domain-name-servers …;’ line and set your favorite overwall dns server.</li>
+<li>restart dhclient, just one method: ifconfig eth0 down; ifconfig eth0 up.</li>
+<li>host -ta twitter.com — true result and no gfw poisoning anymore!</li>
+</ol>
+<h1 id="cui---server-side-connection-obfuscation"><a href="#TOC"><span class="header-section-number">5</span> CUI - server-side connection obfuscation</a></h1>
+<pre><code># iptables \
+    -A INPUT \
+    -p tcp --dport 80 --tcp-flags FIN,SYN,RST,ACK SYN \
+    -m state --state NEW \
+    -j CUI \
+    -m comment --comment &quot;server-side connection obfuscation&quot;
+</code></pre>
+<p>CHINA set can be set using <code>ipset -R &lt; CHINA</code></p>
+<p>Warning: ZHANG and CUI are terminating target, they will ACCEPT packets sent to them, so any rules after them have no effect. They should be put to the last place if other filtering need to be done.</p>
+<h1 id="using-ipset"><a href="#TOC"><span class="header-section-number">6</span> Using ipset</a></h1>
+<p>Note that the ipset you are using should be &gt;= 4.2 which fixes some bug in hash table resizing. Older version with this bug may cause kernel oops if fed with certain parameters. From 0.0.1, ipset is removed from this project. Please use one provided by your distribution.</p>
+<p>Features from ipset are used by this package. You may consult the ipset(8) manpage first, and set up your custom sets for target confining.</p>
+<p>Sample scripts are provided in the `examples’ directory including: GOOGLE, YOUTUBE, CHINA and the NOCLIP set. you may write your own ip set.</p>
+<p>Examples of restoring ipsets from saved scripts using <code>ipset -R</code>:</p>
+<pre><code># ipset -R
+-N YOUTUBE nethash --hashsize 50 --probes 1
+-A YOUTUBE 64.15.112.0/20
+-A YOUTUBE 82.129.37.0/24
+-A YOUTUBE 208.65.152.0/22
+-A YOUTUBE 208.117.224.0/19
+-A YOUTUBE 213.146.171.0/24
+COMMIT
+^D
+</code></pre>
+<p>—probes 1 is the fastest, —probes 4 will be slow. you can adjust your settings to your satisfaction. See syslog if —hashsize is so small and cause too many times of resizing.</p>
+<p>Finally set the NOCLIP set to pack your sets into one set:</p>
+<pre><code># ipset -R
+-N NOCLIP setlist --size 4
+-A NOCLIP GOOGLE
+-A NOCLIP YOUTUBE
+COMMIT
+^D
+</code></pre>
+<p>and add new match in iptables rules:</p>
+<pre><code>-m set --match-set NOCLIP src
+</code></pre>
+<h1 id="setting-up-static-tunnels-with-obfuscation"><a href="#TOC"><span class="header-section-number">7</span> Setting up static tunnels with obfuscation</a></h1>
+<p>Edit paramters in the script <code>examples/gen-iptun-interfaces.sh</code>, and run it. It will generate configuration suitable for putting into <code>/etc/network/interfaces</code> on two endpoints. After that you can <code>ifup</code> both interfaces and try to ping the other endpoint. Now the data on the wire is protected by IPsec and UDP obfuscation and looks like UDP garbage to any NIDS in the middle. Or you could use similar iptables rules with UDPENCAP to encapsulate IPsec transport mode packets without setting up tunnel.</p>
+<h1 id="troubleshooting"><a href="#TOC"><span class="header-section-number">8</span> Troubleshooting</a></h1>
+<p>When you see connection resets in browser, go to syslog and check if any gfw entries exist.</p>
+<p>You can also use tcpdump to save traffic dump. When problems happen, you can use wireshark to open it and trace back for the reason.</p>
+<pre><code># tcpdump -Kpq -C2 -W10 -ieth0 -s0 -wcap port 80 &amp;
+</code></pre>
+<p>When problem happen, type `fg’ to make the job foreground then ^C to stop it.</p>
+<p>Parameters of tcpdump explained: -K: do not verify tcp checksums -p: no promiscuous -q: be quiet -C2: rotate dump file every 2000000 bytes -W10: 10 dump file in maximum -ieth0: input interface is eth0 -s0: capture whole packet -wcap: save dump file as “capXX” port 80: match traffic from/to port 80</p>
+<p>You can also have your own settings and dump saving location just as you wish.</p>
+</body>
+</html>

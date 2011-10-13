@@ -1,0 +1,149 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+  <meta name="generator" content="pandoc" />
+  <title>West-chamber Installation instructions</title>
+  <style type="text/css">
+  body {
+      margin: auto;
+      padding-right: 1em;
+      padding-left: 1em;
+      max-width: 44em; 
+      border-left: 1px solid black;
+      border-right: 1px solid black;
+      color: black;
+      font-family: Verdana, sans-serif;
+      font-size: 100%;
+      line-height: 140%;
+      color: #333; 
+  }
+  pre {
+      border: 1px dotted gray;
+      background-color: #ececec;
+      color: #1111111;
+      padding: 0.5em;
+  }
+  code {
+      font-family: monospace;
+  }
+  h1 a, h2 a, h3 a, h4 a, h5 a { 
+      text-decoration: none;
+      color: #7a5ada; 
+  }
+  h1, h2, h3, h4, h5 { font-family: verdana;
+                       font-weight: bold;
+                       border-bottom: 1px dotted black;
+                       color: #7a5ada; }
+  h1 {
+          font-size: 130%;
+  }
+  
+  h2 {
+          font-size: 110%;
+  }
+  
+  h3 {
+          font-size: 95%;
+  }
+  
+  h4 {
+          font-size: 90%;
+          font-style: italic;
+  }
+  
+  h5 {
+          font-size: 90%;
+          font-style: italic;
+  }
+  
+  h1.title {
+          font-size: 200%;
+          font-weight: bold;
+          padding-top: 0.2em;
+          padding-bottom: 0.2em;
+          text-align: left;
+          border: none;
+  }
+  
+  dt code {
+          font-weight: bold;
+  }
+  dd p {
+          margin-top: 0;
+  }
+  
+  #footer {
+          padding-top: 1em;
+          font-size: 70%;
+          color: gray;
+          text-align: center;
+  }
+  </style>
+</head>
+<body>
+<h1 class="title">West-chamber Installation instructions</h1>
+<div id="TOC">
+<ul>
+<li><a href="#installation-instructions-for-west-chamber"><span class="toc-section-number">1</span> Installation instructions for west-chamber</a></li>
+<li><a href="#supported-configurations-for-this-release"><span class="toc-section-number">2</span> Supported configurations for this release</a></li>
+<li><a href="#selecting-extensions"><span class="toc-section-number">3</span> Selecting extensions</a></li>
+<li><a href="#configuring-and-compiling"><span class="toc-section-number">4</span> Configuring and compiling</a></li>
+<li><a href="#build-time-options"><span class="toc-section-number">5</span> Build-time options</a></li>
+<li><a href="#note-to-distribution-packagers"><span class="toc-section-number">6</span> Note to distribution packagers</a></li>
+</ul>
+</div>
+<h1 id="installation-instructions-for-west-chamber"><a href="#TOC"><span class="header-section-number">1</span> Installation instructions for west-chamber</a></h1>
+<p>West-chamber borrows build system from xtables-addons.</p>
+<p>Xtables-addons uses the well-known configure(autotools) infrastructure in combination with the kernel’s Kbuild system.</p>
+<pre><code> $ ./configure
+ $ make
+ # make install
+</code></pre>
+<p>You have to run ./autogen.sh (requires automake) if <code>configure</code> script is not present. The <code>configure</code> script should be run with bash.</p>
+<p>To install the UDPENCAP target, you need to enable it in <code>mconfig</code>. Warning: this module is highly experimental. Use with caution!</p>
+<h1 id="supported-configurations-for-this-release"><a href="#TOC"><span class="header-section-number">2</span> Supported configurations for this release</a></h1>
+<ul>
+<li>iptables &gt;= 1.4.3</li>
+<li>kernel-source &gt;= 2.6.29 with prepared build/output directory</li>
+</ul>
+<h1 id="selecting-extensions"><a href="#TOC"><span class="header-section-number">3</span> Selecting extensions</a></h1>
+<p>You can edit the “mconfig” file to select what modules to build and install. By default, all modules are enabled.</p>
+<h1 id="configuring-and-compiling"><a href="#TOC"><span class="header-section-number">4</span> Configuring and compiling</a></h1>
+<pre><code>./configure [options]
+
+--with-kbuild=
+</code></pre>
+<p>Specifies the path to the kernel build output directory. We need it for building the kernel extensions. It defaults to <code>/lib/modules/$(runningversion)/build</code>, which usually points to the right directory. (If not, you need to install something.)</p>
+<p>For RPM building, it should be <code>/usr/src/linux-obj/...</code> or whatever location the distro makes use of.</p>
+<pre><code>--with-xtlibdir=
+</code></pre>
+<p>Specifies the path to where the newly built extensions should be installed when <code>make install</code> is run. The default is to use the same path that Xtables/iptables modules use, as determined by <code>pkg-config xtables --variable xtlibdir</code>. Thus, this option normally does NOT need to be specified anymore, even if your distribution put modules in a strange location.</p>
+<p>If you want to enable debugging, use</p>
+<pre><code>./configure CFLAGS=&quot;-ggdb3 -O0&quot;
+</code></pre>
+<p>(-O0 is used to turn off instruction reordering, which makes debugging much easier.)</p>
+<p>To make use of a libxtables that is not in the default path, either</p>
+<ol style="list-style-type: lower-alpha">
+<li><p>append the location of the pkg-config files like:</p>
+<pre><code> PKG_CONFIG_PATH=/usr/local/lib/pkgconfig
+</code></pre></li>
+</ol>
+<p>(assuming that files have been installed), or,</p>
+<ol start="2" style="list-style-type: lower-alpha">
+<li><p>override the pkg-config variables, for example:</p>
+<pre><code> ./configure libxtables_CFLAGS=&quot;-I../iptables/include&quot; \
+             libxtables_LIBS=&quot;-L../iptables/.libs \
+             -Wl,-rpath,../iptables/.libs -lxtables&quot;
+</code></pre></li>
+</ol>
+<p>(Use this in case you wish to use it without having to run <code>make install</code>. This is because the <code>libxtables.pc</code> pkgconfig file in <code>../iptables</code> would already point to e.g. <code>/usr/local</code>.)</p>
+<h1 id="build-time-options"><a href="#TOC"><span class="header-section-number">5</span> Build-time options</a></h1>
+<pre><code>V= controls the verbosity of make commands.
+V=0 &quot;silent&quot; (output filename)
+V=1 &quot;verbose&quot; (entire gcc command line)
+</code></pre>
+<h1 id="note-to-distribution-packagers"><a href="#TOC"><span class="header-section-number">6</span> Note to distribution packagers</a></h1>
+<p>Except for <code>--with-kbuild</code>, distributions should not have a need to supply any other flags (besides <code>--prefix=/usr</code> and perhaps <code>--libdir=/usr/lib64</code>, etc.) to configure when all prerequired packages are installed. If iptables-devel is installed, necessary headers should already be in <code>/usr/include</code>, so that overriding <code>PKG_CONFIG_PATH</code>, <code>libxtables_CFLAGS</code> and <code>libxtables_LIBS</code> variables should not be needed.</p>
+</body>
+</html>

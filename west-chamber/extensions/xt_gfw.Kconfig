@@ -1,0 +1,5 @@
+config NETFILTER_XT_TARGET_DELUDE
+	tristate '"gfw" match support'
+	depends on NETFILTER_XTABLES && NETFILTER_ADVANCED
+	---help---
+	The GFW match allows to match on gfw packet fingerprints.

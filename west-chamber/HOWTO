@@ -1,0 +1,161 @@
+% West-chamber HOWTO
+% Klzgrad <kizdiv@gmail.com>
+
+Getting started
+===============
+
+    # iptables -A INPUT -p tcp --sport 80 --tcp-flags FIN,SYN,RST,ACK SYN,ACK\
+                        -m state --state ESTABLISHED -j ZHANG
+    # iptables -A INPUT -p tcp --sport 80 -m state --state ESTABLISHED -m gfw\
+                        -j LOG --log-level info --log-prefix "gfw: "
+    # iptables -A INPUT -p udp --sport 53 -m state --state ESTABLISHED -m gfw\
+                        -j DROP
+    # mv /etc/resolv.conf /etc/resolv.conf.old
+    # echo nameserver 8.8.8.8 > /etc/resolv.conf
+
+ZHANG - client-side connection obfuscation
+==========================================
+
+    # iptables \
+	    -A INPUT \
+	    -p tcp --sport 80 --tcp-flags FIN,SYN,RST,ACK SYN,ACK \
+	    -m state --state ESTABLISHED \
+	    -j ZHANG \
+	    -m comment --comment "client-side connection obfuscation"
+
+This means incoming SYN/ACK from the ip address in the NOCLIP set and from
+port 80 will be replied with special packets to make connection obfuscated
+against the GFW.
+
+That will make your free from keyword reset filtering when visiting a normal
+server. But certain rfc non-compliant hosts and firewalls will reset the
+connection if received such replies sent by ZHANG. This is why we need ipset
+to limit the ip range that will be dealt with by ZHANG to the minimum of what
+we really need.
+
+Logging GFW tcp resets in syslog
+================================
+
+    # iptables \
+	    -A INPUT \
+	    -p tcp --sport 80 \
+	    -m state --state ESTABLISHED \
+	    -m gfw \
+	    -j LOG --log-level info --log-prefix "gfw: " \
+	    -m comment --comment "log gfw tcp resets"
+
+When you see "connection reset" notice in browser, you may see what happened
+on the transport layer in the tail of syslog.
+
+Dropping GFW dns hijacking packets
+==================================
+
+    # iptables \
+	    -A INPUT \
+	    -p udp --sport 53 \
+	    -m state --state ESTABLISHED \
+	    -m gfw \
+	    -j DROP \
+	    -m comment --comment "drop gfw dns hijacks"
+
+You can update your resolv.conf by:
+
+1. modify dhclient.conf, find the `prepend domain-name-servers ...;' line and
+   set your favorite overwall dns server.
+2. restart dhclient, just one method: ifconfig eth0 down; ifconfig eth0 up.
+3. host -ta twitter.com -- true result and no gfw poisoning anymore!
+
+CUI - server-side connection obfuscation
+========================================
+
+    # iptables \
+	    -A INPUT \
+	    -p tcp --dport 80 --tcp-flags FIN,SYN,RST,ACK SYN \
+	    -m state --state NEW \
+	    -j CUI \
+	    -m comment --comment "server-side connection obfuscation"
+
+CHINA set can be set using `ipset -R < CHINA`
+
+Warning: ZHANG and CUI are terminating target, they will ACCEPT packets sent 
+to them, so any rules after them have no effect.
+They should be put to the last place if other filtering need to be done.
+
+Using ipset
+===========
+Note that the ipset you are using should be >= 4.2 which fixes some bug in
+hash table resizing. Older version with this bug may cause kernel oops if fed
+with certain parameters. From 0.0.1, ipset is removed from this project.
+Please use one provided by your distribution.
+
+Features from ipset are used by this package. You may consult the ipset(8)
+manpage first, and set up your custom sets for target confining.
+
+Sample scripts are provided in the `examples' directory including:
+GOOGLE, YOUTUBE, CHINA and the NOCLIP set. you may write your own ip set.
+
+Examples of restoring ipsets from saved scripts using `ipset -R`:
+
+    # ipset -R
+    -N YOUTUBE nethash --hashsize 50 --probes 1
+    -A YOUTUBE 64.15.112.0/20
+    -A YOUTUBE 82.129.37.0/24
+    -A YOUTUBE 208.65.152.0/22
+    -A YOUTUBE 208.117.224.0/19
+    -A YOUTUBE 213.146.171.0/24
+    COMMIT
+    ^D
+
+--probes 1 is the fastest, --probes 4 will be slow. you can adjust your 
+settings to your satisfaction. See syslog if --hashsize is so small and cause 
+too many times of resizing.
+
+Finally set the NOCLIP set to pack your sets into one set:
+
+    # ipset -R
+    -N NOCLIP setlist --size 4
+    -A NOCLIP GOOGLE
+    -A NOCLIP YOUTUBE
+    COMMIT
+    ^D
+
+and add new match in iptables rules:
+
+    -m set --match-set NOCLIP src
+
+
+Setting up static tunnels with obfuscation
+==========================================
+
+Edit paramters in the script `examples/gen-iptun-interfaces.sh`, and run it.
+It will generate configuration suitable for putting into
+`/etc/network/interfaces` on two endpoints. After that you can `ifup` both
+interfaces and try to ping the other endpoint. Now the data on the wire is
+protected by IPsec and UDP obfuscation and looks like UDP garbage to any NIDS
+in the middle. Or you could use similar iptables rules with UDPENCAP to
+encapsulate IPsec transport mode packets without setting up tunnel.
+
+Troubleshooting
+===============
+When you see connection resets in browser, go to syslog and check if any gfw
+entries exist.
+
+You can also use tcpdump to save traffic dump. When problems happen, you can
+use wireshark to open it and trace back for the reason.
+
+    # tcpdump -Kpq -C2 -W10 -ieth0 -s0 -wcap port 80 &
+
+When problem happen, type `fg' to make the job foreground then ^C to stop it.
+
+Parameters of tcpdump explained:
+  -K: do not verify tcp checksums
+  -p: no promiscuous
+  -q: be quiet
+  -C2: rotate dump file every 2000000 bytes
+  -W10: 10 dump file in maximum
+  -ieth0: input interface is eth0
+  -s0: capture whole packet
+  -wcap: save dump file as "capXX"
+  port 80: match traffic from/to port 80
+
+You can also have your own settings and dump saving location just as you wish.
