@@ -16,6 +16,7 @@
 #include <linux/skbuff.h>
 #include <linux/ip.h>
 #include <linux/tcp.h>
+#include <linux/delay.h>
 #include <linux/netfilter/x_tables.h>
 #ifdef CONFIG_BRIDGE_NETFILTER
 #	include <linux/netfilter_bridge.h>
@@ -24,40 +25,19 @@
 #include "compat_xtables.h"
 #define PFX KBUILD_MODNAME ": "
 
-static void zhang_send_reset(struct sk_buff *oldskb, unsigned int hook)
+static int zhang_inject_tcp_output_from_params(struct sk_buff *oldskb, unsigned int hook, __be32 tcph_flags, __be32 iph_saddr, __be32 iph_daddr, __be16 tcph_sport, __be16 tcph_dport, __be32 tcph_seq, __be32 tcph_ack_seq, __be16 tcph_window) 
 {
-	struct tcphdr _otcph, *tcph, *tcph2;
-	const struct tcphdr *oth;
-	const struct iphdr *oiph;
-	struct sk_buff *skb, *skb2;
+    struct tcphdr *tcph;
+    struct sk_buff *skb;
 	struct iphdr *iph;
 	unsigned int addr_type;
-
-	oiph = ip_hdr(oldskb);
-
-	/* do not deal with fragment */
-	if (oiph->frag_off & htons(IP_OFFSET))
-		return;
-
-	oth = skb_header_pointer(oldskb, ip_hdrlen(oldskb),
-				 sizeof(_otcph), &_otcph);
-	if (oth == NULL)
-		return;
-
-	/* syn[ack] only */
-	if (!oth->syn || !oth->ack || oth->rst || oth->fin)
-		return;
-
-	/* check checksum */
-	if (nf_ip_checksum(oldskb, hook, ip_hdrlen(oldskb), IPPROTO_TCP))
-		return;
-
+    
 	skb = alloc_skb(sizeof(struct iphdr) + sizeof(struct tcphdr) +
 	                 LL_MAX_HEADER, GFP_ATOMIC);
 	if (skb == NULL)
-		return;
+        return 1;
 
-	/* construct from scratch */
+    /* construct from scratch */
 	skb_reserve(skb, LL_MAX_HEADER);
 	skb_reset_network_header(skb);
 	iph = (struct iphdr *)skb_put(skb, sizeof(struct iphdr));
@@ -68,26 +48,21 @@ static void zhang_send_reset(struct sk_buff *oldskb, unsigned int hook)
 	iph->frag_off = htons(IP_DF);
 	iph->protocol = IPPROTO_TCP;
 	iph->check    = 0;
-	iph->saddr    = oiph->daddr;
-	iph->daddr    = oiph->saddr;
+	iph->saddr    = iph_saddr;
+	iph->daddr    = iph_daddr;
 
 	tcph = (struct tcphdr *)skb_put(skb, sizeof(struct tcphdr));
 	memset(tcph, 0, sizeof(*tcph));
-	tcph->source = oth->dest;
-	tcph->dest   = oth->source;
+	tcph->source = tcph_sport;
+	tcph->dest   = tcph_dport;
 	tcph->doff   = sizeof(struct tcphdr) / 4;
-	tcph->window = 0xffffU;
+	tcph->window = tcph_window;
+    
+    if (tcph_flags & TCP_FLAG_RST) tcph->rst     = true;
+    if (tcph_flags & TCP_FLAG_ACK) tcph->ack     = true;
 
-	/*
-	 * essential part 1
-	 * inject an FIN with bad sequence number, obfuscating the handshake.
-	 * it will be dropped by rfc-compliant endpoint, 
-	 * meanwhile thwarting eavesdroppers on the same direction (c -> s).
-	 */
-	tcph->fin     = true;
-	tcph->seq     = oth->ack_seq;
-	tcph->ack_seq = oth->seq;
-
+    tcph->seq     = tcph_seq;
+    tcph->ack_seq = tcph_ack_seq;
 #if LINUX_VERSION_CODE <= KERNEL_VERSION(2, 6, 20)
 	tcph->check = tcp_v4_check(tcph, sizeof(struct tcphdr), iph->saddr,
 	              iph->daddr, csum_partial((char *)tcph,
@@ -115,59 +90,106 @@ static void zhang_send_reset(struct sk_buff *oldskb, unsigned int hook)
 	else
 		iph = ip_hdr(skb);
 
-	iph->ttl       = dst_metric(skb_dst(skb), RTAX_HOPLIMIT);
+    iph->ttl       = dst_metric(skb_dst(skb), RTAX_HOPLIMIT);
 	skb->ip_summed = CHECKSUM_NONE;
 
 	/* "Never happens" */
 	if (skb->len > dst_mtu(skb_dst(skb)))
 		goto free_skb;
 
-	skb2 = skb_copy(skb, GFP_ATOMIC);
-	if (skb2 == NULL)
-		goto free_skb;
-
-	/*
-	 * essential part 2
-	 * inject an ACK with correct SEQ but bad ACK.
-	 * this causes an RST from server which should have no real impact on 
-	 * the original connection,
-	 * thus thwarts eavesdroppers on the other direction (s -> c).
-	 * 
-	 * RFC793: 
-	 *   2.  If the connection is in any non-synchronized state (LISTEN,
-	 *   SYN-SENT, SYN-RECEIVED), and the incoming segment acknowledges
-	 *   something not yet sent (the segment carries an unacceptable ACK),
-	 *   ..., a reset is sent.
-	 * 
-	 *   If the incoming segment has an ACK field, the reset takes its
-	 *   sequence number from the ACK field of the segment, otherwise the
-	 *   reset has sequence number zero and the ACK field is set to the sum
-	 *   of the sequence number and segment length of the incoming segment.
-	 *   The connection remains in the same state.
-	 * 
-	 * sometimes certain kind of rfc non-compliant tcp stacks or firewalls
-	 * may have unexpected response or no reply at all.
-	 *
-	 * seems that the seq is not nessesarily correct.
-	 */
-	tcph2 = (struct tcphdr *)(skb_network_header(skb2) + ip_hdrlen(skb2));
-	tcph2->fin     = false;
-	tcph2->ack     = true;
-	//tcph2->seq     = oth->ack_seq;
-	//tcph2->ack_seq = oth->seq;
-
-	/* checksum shortcut */
-	//csum_replace4(&tcph2->check, tcph->seq, tcph2->seq);
-	//csum_replace4(&tcph2->check, tcph->ack_seq, tcph2->ack_seq);
-	csum_replace2(&tcph2->check, htons(((u_int8_t *)tcph)[13]), 
-			htons(((u_int8_t *)tcph2)[13]));
-
 	ip_local_out(skb);
-	ip_local_out(skb2);
+    return 0;
 
-	return;
 free_skb:
 	kfree_skb(skb);
+    return 2;
+}
+
+static void zhang_send_reset(struct sk_buff *oldskb, unsigned int hook)
+{
+	struct tcphdr _otcph;
+	const struct tcphdr *oth;
+	const struct iphdr *oiph;
+
+    __be32 saddr;
+	__be32 daddr;
+	__be16 sport;
+	__be16 dport;
+	__be32 ack;
+	__be32 seq;
+    int retval = 0;
+	
+	oiph = ip_hdr(oldskb);
+
+	/* do not deal with fragment */
+	if (oiph->frag_off & htons(IP_OFFSET))
+		return;
+
+	oth = skb_header_pointer(oldskb, ip_hdrlen(oldskb),
+				 sizeof(_otcph), &_otcph);
+	if (oth == NULL)
+		return;
+
+	/* syn[ack] only */
+	if (!oth->syn || !oth->ack || oth->rst || oth->fin)
+		return;
+
+	/* check checksum */
+	if (nf_ip_checksum(oldskb, hook, ip_hdrlen(oldskb), IPPROTO_TCP))
+		return;
+    
+    saddr = oiph->daddr;
+    daddr = oiph->saddr;
+    
+    sport = oth->dest;
+    dport = oth->source;
+
+
+	/*
+	 * 1. RST
+	 */
+    seq = htonl(ntohl(oth->ack_seq) - 1);
+    ack = oth->seq;
+
+    retval = zhang_inject_tcp_output_from_params(oldskb, hook, TCP_FLAG_RST, saddr, daddr, sport, dport, seq, ack, htons(0x0001U));
+    if (retval) {
+        return;
+    }
+
+	/*
+	 * 2. ACK 
+	 */
+    seq = oth->ack_seq;
+    ack = oth->seq;
+
+    retval = zhang_inject_tcp_output_from_params(oldskb, hook, TCP_FLAG_ACK, saddr, daddr, sport, dport, seq, ack, htons(0x0001U));
+    if (retval) {
+        return;
+    }
+    
+    /*
+     * 3. RST + ACK
+     */
+    seq = htonl(ntohl(oth->ack_seq) + 0);
+    ack = htonl(ntohl(oth->seq) + 0);
+    retval = zhang_inject_tcp_output_from_params(oldskb, hook, TCP_FLAG_ACK|TCP_FLAG_RST, saddr, daddr, sport, dport, seq, ack, htons(0x0001U));
+    if (retval) {
+        return;
+    }
+
+    /*
+     * 4. RST + ACK
+     */
+    seq = htonl(ntohl(oth->ack_seq) + 2);
+    ack = htonl(ntohl(oth->seq) + 2);
+    retval = zhang_inject_tcp_output_from_params(oldskb, hook, TCP_FLAG_ACK|TCP_FLAG_RST, saddr, daddr, sport, dport, seq, ack, htons(0x0001U));
+    if (retval) {
+        return;
+    }
+    
+    // the delay may hold up the system
+    // mdelay(200);
+	return;
 }
 
 static unsigned int
