@@ -18,9 +18,9 @@ DNS污染
     a) 国外DNS服务器。大家比较熟悉的可能是[Google Public DNS](http://code.google.com/speed/public-dns/)。但是最近测试发现针对 Google DNS 的丢包很严重。先推荐两个，[V2EX DNS](http://dns.v2ex.com/) 和 [OpenDNS](http://www.opendns.com/)。
 
     b) 丢弃DNS伪包。
-    Windows: [west-chmber的windows 移植](http://code.google.com/p/west-chamber-season-3/downloads/detail?name=west-chamber-win-0.05.zip)
-    Mac OS X: [kernet](https://github.com/liruqi/kernet/downloads)。下最新的吧。运气好的话还能上blogspot。
-    Linux: (Linux平台上比较麻烦，先推荐使用dnsmasq，要喜欢折腾继续看。)需要有iptables。如果 iptables 有 u32模块(或者你能自己搞定安装一个)，可以直接用本项目中的 client.sh；否则，只能自己编译原始的[西厢项目](http://code.google.com/p/scholarzhang)，具体操作看西厢的文档吧。
+    * Windows: [west-chmber的windows 移植](http://code.google.com/p/west-chamber-season-3/downloads/detail?name=west-chamber-win-0.05.zip)
+    * Mac OS X: [kernet](https://github.com/liruqi/kernet/downloads)。下最新的吧。运气好的话还能上blogspot。
+    * Linux: (Linux平台上比较麻烦，先推荐使用dnsmasq，要喜欢折腾继续看。)需要有iptables。如果 iptables 有 u32模块(或者你能自己搞定安装一个)，可以直接用本项目中的 client.sh；否则，只能自己编译原始的[西厢项目](http://code.google.com/p/scholarzhang)，具体操作看西厢的文档吧。
 
 tcp连接混淆
 -----------
