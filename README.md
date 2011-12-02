@@ -1,7 +1,7 @@
 项目目的
 --------
 * 反污染的DNS
-* 尽可能实现tcp连接混淆
+* 尽可能实现TCP连接混淆
 
 DNS污染
 -------
@@ -22,7 +22,7 @@ DNS污染
     * Mac OS X: [kernet](https://github.com/liruqi/kernet/downloads)。下最新的吧。运气好的话还能上blogspot。
     * Linux: (Linux平台上比较麻烦，先推荐使用dnsmasq，要喜欢折腾继续看。)需要有iptables。如果 iptables 有 u32模块(或者你能自己搞定安装一个)，可以直接用本项目中的 client.sh；否则，只能自己编译原始的[西厢项目](http://code.google.com/p/scholarzhang)，具体操作看西厢的文档吧。
 
-tcp连接混淆
+TCP连接混淆
 -----------
 首先说明一下，[这东西很不靠谱](http://gfwrev.blogspot.com/2010/03/gfw.html)，容易受GFW 的更新而影响。感觉是，目前就kernet 项目效果还行。西厢的原始项目和Windows 移植现在都不好用。
 
