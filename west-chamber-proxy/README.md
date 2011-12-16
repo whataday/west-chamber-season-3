@@ -13,7 +13,7 @@ IP封锁
 使用方法
 --------
 * Window
-    1. 下载[客户端](https://github.com/downloads/liruqi/west-chamber-season-3/gproxy.zip)，解压缩，双击 gproxy.exe
+    1. 下载[客户https://github.com/downloads/liruqi/west-chamber-season-3/west-chamber-proxy-20111217.zip3/gproxy.zip)，解压缩，双击 gproxy.exe
     2. 把浏览器HTTP代理设置为 127.0.0.1:1998。暂时不支持 HTTPS。
 
 可用性
