@@ -4,7 +4,7 @@
 
 DNS污染
 -------
-本工具运行在用户态，目前没有实现反DNS污染。关于反DNS污染，参考上一级目录的内容。
+有实现用户态反DNS污染。而且独立于系统的DNS配置。
 
 IP封锁
 ------
@@ -13,13 +13,12 @@ IP封锁
 使用方法
 --------
 * Window
-    1. 下载[客户端](https://github.com/downloads/liruqi/west-chamber-season-3/gproxy.zip)，解压缩，双击 
-    2. (可选)安装[西厢的Windows 移植](http://west-chamber-season-3.googlecode.com/files/west-chamber-win-0.05.zip)。
-    3. 把浏览器HTTP代理设置为 127.0.0.1:1998。暂时不支持 HTTPS
+    1. 下载[客户端](https://github.com/downloads/liruqi/west-chamber-season-3/gproxy.zip)，解压缩，双击 gproxy.exe
+    2. 把浏览器HTTP代理设置为 127.0.0.1:1998。暂时不支持 HTTPS。
 
 可用性
 ------
-如果网站IP被封锁，那没办法。但是很多网站还是可以上的，比如 kenengba.com。不一一列举了。
+如果网站IP被封锁，那没办法。但是很多网站可以上的，比如 kenengba.com。不一一列举了。
 
 问题反馈
 --------
@@ -32,6 +31,5 @@ IP封锁
 TODO
 ----
 * 实现HTTPS 代理
-* 实现应用层的反DNS污染。
 * Mac / Linux 平台的binary 文件发布
 
