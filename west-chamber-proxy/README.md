@@ -14,8 +14,13 @@ IP封锁
 --------
 * Window
     1. 下载[客户端](https://github.com/downloads/liruqi/west-chamber-season-3/west-chamber-proxy-20111217.zip)，解压缩，双击 gproxy.exe
-    2. 把浏览器HTTP代理设置为 127.0.0.1:1998。暂时不支持 HTTPS。
+    2. 把浏览器HTTP代理设置为 127.0.0.1:1998。
+* Mac OS X (目前仅支持 64位系统)
+    1. 下载[客户端](https://github.com/downloads/liruqi/west-chamber-season-3/west-chamber-proxy-mac-x64-20111217.zip)，解压缩，双击 gproxy
+    2. 把浏览器HTTP代理设置为 127.0.0.1:1998。
 
+暂时不支持 HTTPS。
+    
 可用性
 ------
 如果网站IP被封锁，那没办法。但是很多网站可以上的，比如 kenengba.com。不一一列举了。
