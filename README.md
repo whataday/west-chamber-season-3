@@ -2,6 +2,7 @@
 --------
 * 反DNS污染
 * 尽可能实现TCP连接混淆
+* 最近发现的了一种用户态代理的方式，效果要好得多。我注意力也转移到用户态工具的开发。参见[西厢代理](https://github.com/liruqi/west-chamber-season-3/tree/master/west-chamber-proxy),目前已经推出了多个平台的代理工具。
 
 DNS污染
 -------
