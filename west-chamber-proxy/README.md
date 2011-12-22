@@ -22,7 +22,7 @@ IP封锁
     2. 把浏览器HTTP/HTTPS代理设置为 127.0.0.1:1998。
 * Android
 
-    下载 [apk文件](https://github.com/liruqi/west-chamber-season-3/west-chamber-proxy-20111222.apk)
+    下载 [apk文件](https://github.com/liruqi/west-chamber-season-3/west-chamber-proxy-20111223.apk)
     
 可用性
 ------
@@ -44,3 +44,6 @@ TODO
 ----
 * Linux, iOS 平台的文件发布
 
+UPDATE LOG
+---
+2011-11-23 解决android 客户端的远程 dns 解析的问题。
