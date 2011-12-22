@@ -13,13 +13,12 @@ IP封锁
 使用方法
 --------
 * Window
-    1. 下载[客户端](https://github.com/downloads/liruqi/west-chamber-season-3/west-chamber-proxy-20111217.zip)，解压缩，双击 gproxy.exe
-    2. 把浏览器HTTP代理设置为 127.0.0.1:1998。
+    1. 下载[客户端](https://github.com/downloads/liruqi/west-chamber-season-3/west-chamber-proxy-20111222.zip)，解压缩，双击 gproxy.exe
+    2. 把浏览器HTTP/HTTPS代理设置为 127.0.0.1:1998。
 * Mac OS X (目前仅支持 64位系统)
     1. 下载[客户端](https://github.com/downloads/liruqi/west-chamber-season-3/west-chamber-proxy-mac-x64-20111217.zip)，解压缩，双击 gproxy
-    2. 把浏览器HTTP代理设置为 127.0.0.1:1998。
+    2. 把浏览器HTTP/HTTPS代理设置为 127.0.0.1:1998。
 
-暂时不支持 HTTPS。
     
 可用性
 ------
@@ -35,6 +34,5 @@ IP封锁
 
 TODO
 ----
-* 实现HTTPS 代理
-* Mac / Linux 平台的binary 文件发布
+* Linux, Android, iOS 平台的文件发布
 
