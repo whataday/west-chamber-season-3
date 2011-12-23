@@ -22,7 +22,7 @@ IP封锁
     2. 把浏览器HTTP/HTTPS代理设置为 127.0.0.1:1998。
 * Android
 
-    下载 [apk文件](https://github.com/liruqi/west-chamber-season-3/west-chamber-proxy-20111223.apk)
+    基于[GAE Proxy](http://code.google.com/p/gaeproxy/)修改的。下载 [apk文件](https://github.com/liruqi/west-chamber-season-3/west-chamber-proxy-20111223.apk/qr_code)
     
 可用性
 ------
