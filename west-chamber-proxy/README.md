@@ -1,6 +1,7 @@
 项目目的
 --------
 * 不需要服务器的本地翻墙代理工具。
+* [项目维护地址](https://github.com/liruqi/west-chamber-season-3/tree/master/west-chamber-proxy)
 
 开发者
 ------
@@ -20,15 +21,17 @@ IP封锁
 * Window
 
     1. 下载[客户端](https://github.com/downloads/liruqi/west-chamber-season-3/west-chamber-proxy-20111222.zip)，解压缩，双击 gproxy.exe
-    2. 把浏览器HTTP/HTTPS代理设置为 127.0.0.1:1998。
+    2. 把浏览器HTTP代理设置为 127.0.0.1:1998。
 * Mac OS X (目前仅支持 64位系统)
 
     1. 下载[客户端](https://github.com/downloads/liruqi/west-chamber-season-3/west-chamber-proxy-mac-x64-20111217.zip)，解压缩，双击 gproxy
-    2. 把浏览器HTTP/HTTPS代理设置为 127.0.0.1:1998。
+    2. 把浏览器HTTP代理设置为 127.0.0.1:1998。
 * Android
 
     基于[GAE Proxy](http://code.google.com/p/gaeproxy/)修改的。下载 [apk文件](https://github.com/liruqi/west-chamber-season-3/west-chamber-proxy-20111223.apk/qr_code)
     
+HTTPS 目前似乎有点问题。
+
 可用性
 ------
 如果网站IP被封锁，那没办法。但是很多网站可以上的，比如 kenengba.com。不一一列举了。
