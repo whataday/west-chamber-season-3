@@ -22,10 +22,11 @@ IP封锁
 
     1. 下载[客户端](https://github.com/downloads/liruqi/west-chamber-season-3/west-chamber-proxy-20111224.zip)，解压缩，双击 exe
     2. 把浏览器HTTP代理设置为 127.0.0.1:1998。
-* Mac OS X (目前仅支持 64位系统)
+* Mac / Linux
 
-    1. 下载[客户端](https://github.com/downloads/liruqi/west-chamber-season-3/west-chamber-proxy-mac-x64-20111217.zip)，解压缩，双击 gproxy
-    2. 把浏览器HTTP代理设置为 127.0.0.1:1998。
+    1. 提供了[pyc文件下载](https://github.com/downloads/liruqi/west-chamber-season-3/west-chamber-proxy-linux-20111124.zip)，解压缩，终端运行 python xxx.pyc
+    2. 如果加一个额外的数字参数，可以换本地端口。
+    3. 把浏览器HTTP代理设置为 127.0.0.1:1998。
 * Android
 
     基于[GAE Proxy](http://code.google.com/p/gaeproxy/)修改的。下载 [apk文件](https://github.com/liruqi/west-chamber-season-3/west-chamber-proxy-20111223.apk/qr_code)
@@ -50,7 +51,7 @@ HTTPS 目前似乎有点问题。
 
 TODO
 ----
-* Linux, iOS 平台的文件发布
+* iOS 平台移植
 
 UPDATE LOG
 ---
