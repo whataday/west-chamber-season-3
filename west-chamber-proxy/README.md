@@ -29,7 +29,7 @@ IP封锁
     3. 把浏览器HTTP代理设置为 127.0.0.1:1998。
 * Android
 
-    基于[GAE Proxy](http://code.google.com/p/gaeproxy/)修改的。下载 [apk文件](https://github.com/liruqi/west-chamber-season-3/west-chamber-proxy-20111223.apk/qr_code)
+    基于[GAE Proxy](http://code.google.com/p/gaeproxy/)修改的。下载 [apk文件](https://github.com/liruqi/west-chamber-season-3/west-chamber-proxy-20111223.apk/qr_code)。Google Market 也上线了，[地址](https://market.android.com/details?id=org.westchamberproxy)。
     
 HTTPS 目前似乎有点问题。
 
