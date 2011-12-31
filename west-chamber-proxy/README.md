@@ -16,26 +16,37 @@ IP封锁
 ------
 由于不依赖与第三方服务器，对于IP封锁也没有优美的解决方案。目前只是通过更新配置文件的方式，尽量避免IP封锁。
 
+可用性
+------
+本工具在联通的移动网络下不可用。
+如果国外网站IP被封锁，使用本工具也无法访问。
+另外，Android 客户端似乎设置了 https 代理，访问需要登陆的网站也有问题。
+
 使用方法
 --------
 * Window
 
     1. 下载[客户端](https://github.com/downloads/liruqi/west-chamber-season-3/west-chamber-proxy-20111224.zip)，解压缩，双击 exe
     2. 把浏览器HTTP代理设置为 127.0.0.1:1998。
+
 * Mac / Linux
 
     1. 提供了[pyc文件下载](https://github.com/downloads/liruqi/west-chamber-season-3/west-chamber-proxy-linux-20111124.zip)，解压缩，终端运行 python xxx.pyc
     2. 如果加一个额外的数字参数，可以换本地端口。
     3. 把浏览器HTTP代理设置为 127.0.0.1:1998。
+
 * Android
 
     基于[GAE Proxy](http://code.google.com/p/gaeproxy/)修改的。下载 [apk文件](https://github.com/liruqi/west-chamber-season-3/west-chamber-proxy-20111223.apk/qr_code)。Google Market 也上线了，[地址](https://market.android.com/details?id=org.westchamberproxy)。
+
+* iOS
+    
+    目前不打算自己做一个iOS 应用放在 appstore上。因为这需要做成浏览器，我不喜欢做自己不擅长而且重复的事情。iOS 上要使用代理有两个办法。(下载中提供了python27的 pyc，有兴趣的同学完全可以自己尝试。)
+
+    1. 局域网内的其它设备(PC, Android 设备)上安装本代理，然后把 iOS 设备的 HTTP 代理设置到该设备上。（或者在国内有服务器的同学，自己搭建HTTP 代理）
+    2. 类似GoAgent 那种iOS客户端的办法。需要越狱。单我本人不喜欢刷机越狱，所以，暂不研究了。
     
 HTTPS 目前似乎有点问题。
-
-可用性
-------
-如果网站IP被封锁，那没办法。但是很多网站可以上的，比如 kenengba.com。不一一列举了。
 
 问题反馈
 --------
@@ -51,7 +62,9 @@ HTTPS 目前似乎有点问题。
 
 TODO
 ----
-* iOS 平台移植
+* HTTPS 支持。至少做一个HTTPS下的DNS解析吧。
+* 实现系统HTTP 代理的设置，这样系统自带的浏览器也可以用。
+* 用 Java 重写代理逻辑，用户就不用下载依赖的 python 软件包。
 
 UPDATE LOG
 ---
